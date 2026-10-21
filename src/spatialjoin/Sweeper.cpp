@@ -1949,7 +1949,9 @@ void Sweeper::writeRel(size_t t, const std::string& a, const std::string& b,
 
   auto ts = TIME();
 
-  if (_numSides == 2 && (a[0] != 'A' || a[0] == b[0])) return;
+  if (_numSides == 2 &&
+      (a[0] == b[0] ||
+       (!_cfg.emitReverseRelationsInTwoSidedJoin && a[0] != 'A'))) return;
 
   _cfg.writeRelCb(t, a.c_str() + 1, a.size() - 1, b.c_str() + 1, b.size() - 1,
                   pred.c_str(), pred.size());

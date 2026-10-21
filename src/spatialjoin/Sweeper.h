@@ -215,6 +215,7 @@ struct SweeperCfg {
   std::function<void(const std::string&)> statsCb;
   std::function<void(size_t)> sweepProgressCb;
   std::function<void()> sweepCancellationCb;
+  bool emitReverseRelationsInTwoSidedJoin = false;
 };
 
 // buffer size _must_ be multiples of sizeof(BoxVal) and should hold at least

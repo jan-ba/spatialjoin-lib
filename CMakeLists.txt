@@ -2,12 +2,19 @@ cmake_minimum_required (VERSION 3.21)
 
 project (spatialjoin)
 
+option(SPATIALJOIN_BUILD_CLI "Build the spatialjoin command-line executable" ${PROJECT_IS_TOP_LEVEL})
+option(SPATIALJOIN_BUILD_TESTS "Build SpatialJoin tests" ${PROJECT_IS_TOP_LEVEL})
+
 if (CMAKE_BUILD_TYPE)
 	string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
 endif()
 
-if(PROJECT_IS_TOP_LEVEL)
+if(PROJECT_IS_TOP_LEVEL AND SPATIALJOIN_BUILD_TESTS)
 	enable_testing()
+endif()
+
+if(NOT SPATIALJOIN_BUILD_TESTS)
+	set(CMAKE_TESTING_ENABLED OFF)
 endif()
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
@@ -50,7 +57,41 @@ if (_get_git_revision)
 	endif()
 endif()
 
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
+
 add_subdirectory(src)
 
-# install target
-install(TARGETS spatialjoin RUNTIME DESTINATION bin)
+install(TARGETS spatialjoin-dev pb_util pb_util_geo
+    EXPORT spatialjoinTargets
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(FILES src/spatialjoin/Join.h
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/spatialjoin)
+install(DIRECTORY src/util/
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/util
+    FILES_MATCHING
+    PATTERN "*.h"
+    PATTERN "*.hpp"
+    PATTERN "*.tpp"
+    PATTERN ".git*" EXCLUDE
+    PATTERN "tests" EXCLUDE)
+install(FILES LICENSE
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/licenses/spatialjoin)
+install(FILES src/util/LICENSE
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/licenses/spatialjoin
+    RENAME util-LICENSE)
+
+set(SPATIALJOIN_CMAKE_DIR ${CMAKE_INSTALL_LIBDIR}/cmake/spatialjoin)
+configure_package_config_file(
+    cmake/spatialjoinConfig.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/spatialjoinConfig.cmake
+    INSTALL_DESTINATION ${SPATIALJOIN_CMAKE_DIR})
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/spatialjoinConfig.cmake
+    DESTINATION ${SPATIALJOIN_CMAKE_DIR})
+install(EXPORT spatialjoinTargets
+    NAMESPACE spatialjoin::
+    DESTINATION ${SPATIALJOIN_CMAKE_DIR})
+
+if(SPATIALJOIN_BUILD_CLI)
+    install(TARGETS spatialjoin RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+endif()
